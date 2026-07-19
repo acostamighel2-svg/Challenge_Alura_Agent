@@ -1,16 +1,14 @@
 import streamlit as st
-    import os
-    from backend import responder_pregunta, procesar_documento, generar_embeddings_contexto, cargar_base_predeterminada
+import os
+from backend import responder_pregunta, procesar_documento, generar_embeddings_contexto, cargar_base_predeterminada
 
-    st.set_page_config(page_title="Asistente de Eventos", page_icon="🤖", layout="wide")
+st.set_page_config(page_title="Asistente de Eventos", page_icon="🤖", layout="wide")
 
-    # CARGA AUTOMÁTICA DE LA BASE PREDETERMINADA
+# CARGA AUTOMÁTICA DE LA BASE PREDETERMINADA
+cargar_base_predeterminada()
 
-    cargar_base_predeterminada()
-
-    # Si por alguna razón no se ha asignado un nombre de evento, dejamos uno genérico
-    if "nombre_evento" not in st.session_state:
-        st.session_state.nombre_evento = "Documento No Cargado"
+if "nombre_evento" not in st.session_state:
+    st.session_state.nombre_evento = "Documento No Cargado"
 
     #INTERFAZ GRÁFICA (UI)
 
@@ -60,3 +58,30 @@ if "mensajes" not in st.session_state:
         {"role": "assistant",
          "content": f"¡Hola! Soy tu asistente para el evento **{st.session_state.nombre_evento}**. ¿En qué te puedo colaborar hoy?"}
     ]
+# Mostrar los mensajes existentes en la interfaz
+for mensaje in st.session_state.mensajes:
+    with st.chat_message(mensaje["role"]):
+        st.write(mensaje["content"])
+
+# 4. CAPTURA Y PROCESAMIENTO DE PREGUNTAS
+if pregunta_usuario := st.chat_input("Escribe tu pregunta aquí..."):
+
+    # Mostrar la pregunta del usuario en pantalla inmediatamente
+    with st.chat_message("user"):
+        st.write(pregunta_usuario)
+
+    # Guardar la pregunta en el historial
+    st.session_state.mensajes.append({"role": "user", "content": pregunta_usuario})
+
+    # Generar la respuesta usando el backend
+    with st.chat_message("assistant"):
+        with st.spinner("Pensando..."):
+            try:
+                respuesta_agente = responder_pregunta(pregunta_usuario)
+                st.write(respuesta_agente)
+            except Exception as e:
+                respuesta_agente = f"Lo siento, ocurrió un error al procesar tu solicitud: {e}"
+                st.error(respuesta_agente)
+
+    # Guardar la respuesta del asistente en el historial
+    st.session_state.mensajes.append({"role": "assistant", "content": respuesta_agente})
