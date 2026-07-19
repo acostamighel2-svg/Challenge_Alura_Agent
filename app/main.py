@@ -53,3 +53,10 @@ with st.sidebar:
 # 2. CUERPO PRINCIPAL: Título Dinámico del Evento
 st.title(f"🤖 Asistente Virtual para eventos: {st.session_state.nombre_evento}")
 st.subheader("Hazme cualquier pregunta sobre el evento basado en la documentación oficial")
+
+# 3. HISTORIAL DE CHAT: Inicializar si no existe
+if "mensajes" not in st.session_state:
+    st.session_state.mensajes = [
+        {"role": "assistant",
+         "content": f"¡Hola! Soy tu asistente para el evento **{st.session_state.nombre_evento}**. ¿En qué te puedo colaborar hoy?"}
+    ]
