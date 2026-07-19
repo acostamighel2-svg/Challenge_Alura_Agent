@@ -114,3 +114,35 @@ def buscar_respuesta_semantica(pregunta, bloques_contexto, embeddings_contexto):
     if mejor_similitud > 0.3:
         return mejor_bloque
     return None
+
+def generar_respuesta_conversacional(pregunta, contexto_recuperado, historial_cohere=[]):
+    """Usa el LLM de Cohere pasándole el historial de la conversación para mantener el hilo."""
+    co = obtener_cliente_cohere()
+    if not co:
+        return "Cliente de Cohere no inicializado."
+
+    prompt_sistema = (
+        "Eres un asistente de soporte virtual humano, simpático, directo y conciso para un evento tecnológico.\n\n"
+        "REGLAS DE OBLIGATORIO CUMPLIMIENTO:\n"
+        "1. SI EL USUARIO DA RESPUESTAS CORTAS, AFIRMACIONES, NEGACIONES O EXCLAMACIONES (ej: 'no', 'sí', 'ok', 'huaoo', 'gracias'): "
+        "Mantén el hilo de la conversación de forma natural basándote en el historial de chat (ej: 'Entendido, ¿hay algo más en lo que te pueda colaborar?', '¡Perfecto! Si te surge alguna duda aquí estaré.'). NO inventes información del evento ni uses el contexto si no viene al caso.\n"
+        "2. SI EL USUARIO HACE UNA PREGUNTA REAL SOBRE EL EVENTO: Responde usando EXCLUSIVAMENTE el Contexto de Referencia provisto. Sé directo y ve al grano.\n"
+        "3. SI PREGUNTAN ALGO QUE NO ESTÁ EN EL CONTEXTO: Di amablemente que no cuentas con esa información específica en tus registros oficiales."
+    )
+
+    # Si no hay contexto relevante o la pregunta es un monosílabo/afirmación, ignoramos el contexto erróneo
+    contexto_texto = contexto_recuperado if contexto_recuperado else "No hay contexto relevante para esta interacción."
+    prompt_usuario = f"Contexto de Referencia:\n{contexto_texto}\n\nPregunta actual del Usuario: {pregunta}"
+
+    try:
+        # Le pasamos chat_history para que recuerde de qué venían hablando
+        respuesta = co.chat(
+            model="command-r-08-2024",
+            message=prompt_usuario,
+            preamble=prompt_sistema,
+            chat_history=historial_cohere,
+            temperature=0.2
+        )
+        return respuesta.text
+    except Exception as e:
+        return f"Error al generar la respuesta con el LLM de Cohere: {e}"
