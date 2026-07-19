@@ -88,3 +88,29 @@ def obtener_cliente_cohere():
             input_type="search_document"
         )
         return response_contexto.embeddings
+
+def buscar_respuesta_semantica(pregunta, bloques_contexto, embeddings_contexto):
+    """Encuentra el bloque de datos más relevante basado en la pregunta."""
+    co = obtener_cliente_cohere()
+    if not co or not bloques_contexto or not embeddings_contexto:
+        return None
+
+    response_pregunta = co.embed(
+        texts=[pregunta],
+        model="embed-multilingual-v3.0",
+        input_type="search_query"
+    )
+    embedding_pregunta = response_pregunta.embeddings[0]
+
+    mejor_similitud = -1
+    mejor_bloque = ""
+
+    for bloque, embedding_doc in zip(bloques_contexto, embeddings_contexto):
+        similitud = sum(p * d for p, d in zip(embedding_pregunta, embedding_doc))
+        if similitud > mejor_similitud:
+            mejor_similitud = similitud
+            mejor_bloque = bloque
+
+    if mejor_similitud > 0.3:
+        return mejor_bloque
+    return None
