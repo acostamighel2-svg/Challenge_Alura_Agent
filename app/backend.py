@@ -147,7 +147,7 @@ def generar_respuesta_conversacional(pregunta, contexto_recuperado, historial_co
     except Exception as e:
         return f"Error al generar la respuesta con el LLM de Cohere: {e}"
 
-    def responder_pregunta(pregunta_usuario):
+   def responder_pregunta(pregunta_usuario):
         """Orquesta la detección de palabras clave, historial, búsqueda semántica y generación."""
         pregunta_limpia = pregunta_usuario.strip().lower().replace("?", "").replace("¡", "").replace("!", "")
 
