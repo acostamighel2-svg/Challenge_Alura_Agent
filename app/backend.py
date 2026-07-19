@@ -146,3 +146,40 @@ def generar_respuesta_conversacional(pregunta, contexto_recuperado, historial_co
         return respuesta.text
     except Exception as e:
         return f"Error al generar la respuesta con el LLM de Cohere: {e}"
+
+    def responder_pregunta(pregunta_usuario):
+        """Orquesta la detección de palabras clave, historial, búsqueda semántica y generación."""
+        pregunta_limpia = pregunta_usuario.strip().lower().replace("?", "").replace("¡", "").replace("!", "")
+
+        # 1. Filtro rápido de Small Talk y respuestas monosílabas comunes
+        respuestas_cortas = ["hola", "buenas", "que tal", "no", "si", "sí", "ok", "vale", "gracias", "perfecto",
+                             "genial"]
+
+        # 2. Transformar el historial de Streamlit al formato que entiende Cohere (List de dicts con 'role' y 'message')
+        historial_cohere = []
+        if "mensajes" in st.session_state:
+            # Pasamos los últimos 6 mensajes para no saturar la API pero mantener el contexto
+            for msg in st.session_state.mensajes[-6:]:
+                # Cohere espera 'USER' o 'CHATBOT' en mayúsculas
+                role_cohere = "USER" if msg["role"] == "user" else "CHATBOT"
+                historial_cohere.append({"role": role_cohere, "message": msg["content"]})
+
+        # Si es una palabra suelta del filtro o es un texto extremadamente corto (menos de 4 letras)
+        if pregunta_limpia in respuestas_cortas or len(pregunta_limpia) < 4:
+            # Viaja directo al LLM con el historial, SIN buscar en el CSV para evitar falsos positivos
+            return generar_respuesta_conversacional(pregunta_usuario, contexto_recuperado=None,
+                                                    historial_cohere=historial_cohere)
+
+        # 3. Si es una pregunta real, procedemos con RAG (Buscar en el CSV)
+        bloques = st.session_state.get("bloques_evento", [])
+        embeddings = st.session_state.get("embeddings_evento", None)
+
+        if not bloques or embeddings is None:
+            return "⚠️ Por favor, asegúrate de cargar primero un archivo base de conocimiento en la barra lateral antes de preguntar."
+
+        bloque_relevante = buscar_respuesta_semantica(pregunta_usuario, bloques, embeddings)
+
+        # Generamos la respuesta enviando el bloque del CSV y el historial acumulado
+        respuesta_final = generar_respuesta_conversacional(pregunta_usuario, bloque_relevante, historial_cohere)
+
+        return respuesta_final
