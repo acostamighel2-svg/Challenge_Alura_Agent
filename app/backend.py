@@ -17,7 +17,7 @@ def obtener_cliente_cohere():
             st.error(f"❌ Error al conectar con Cohere: {e}")
             return None
 
-        return st.session_state.co_client
+    return st.session_state.co_client
 
 def cargar_base_predeterminada():
         """Busca y procesa el archivo CSV por defecto usando rutas absolutas seguras."""
