@@ -19,7 +19,7 @@ def obtener_cliente_cohere():
 
         return st.session_state.co_client
 
-    def cargar_base_predeterminada():
+def cargar_base_predeterminada():
         """Busca y procesa el archivo CSV por defecto usando rutas absolutas seguras."""
         if "bloques_evento" in st.session_state and st.session_state.bloques_evento:
             return
@@ -47,7 +47,7 @@ def obtener_cliente_cohere():
             # Si no lo encuentra, dejamos el estado explícito para saber qué falló
             st.session_state.nombre_evento = "Documento No Encontrado"
 
-    def procesar_documento(ruta_archivo):
+def procesar_documento(ruta_archivo):
         """Detecta la extensión del archivo y extrae su contenido."""
         extension = os.path.splitext(ruta_archivo)[1].lower()
         bloques_texto = []
@@ -76,7 +76,7 @@ def obtener_cliente_cohere():
 
         return bloques_texto
 
-    def generar_embeddings_contexto(bloques_contexto):
+def generar_embeddings_contexto(bloques_contexto):
         """Calcula los embeddings de todos los bloques del documento."""
         co = obtener_cliente_cohere()
         if not co or not bloques_contexto:
