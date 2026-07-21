@@ -1,0 +1,6 @@
+streamlit
+cohere
+langchain
+langchain-community
+pandas
+pypdf
